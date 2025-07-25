@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mad Tinkers Archives: A Virtual Art Museum</title>
+  <meta name="viewport" content="width=900, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      background: #181818;
+      color: #e2e2e2;
+      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+      min-height: 100vh;
+    }
+    #entrance {
+      background: url('entrance_bg.png') center center / cover no-repeat, #181818;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+      transition: opacity 0.7s;
+    }
+    #entrance .main-title {
+      font-size: 3.2em;
+      letter-spacing: 0.11em;
+      color: #fff;
+      text-shadow: 0 2px 20px #c00, 0 1px 10px #000;
+      font-family: 'Orbitron', 'Arial Black', 'Impact', sans-serif;
+    }
+    #entrance .subtitle {
+      font-size: 1.32em;
+      color: #fff8;
+      margin-bottom: 2em;
+      margin-top: 0.4em;
+      letter-spacing: 0.07em;
+      font-style: italic;
+      text-shadow: 0 1px 10px #000;
+    }
+    #entrance .enter-btn {
+      background: linear-gradient(90deg, #c00 60%, #911 120%);
+      color: #fff;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 9px;
+      padding: 0.7em 2.7em;
+      letter-spacing: 0.09em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 22px #900c, 0 2px 18px #222;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    #entrance .enter-btn:hover {
+      background: #e94c2f;
+      box-shadow: 0 0 40px #c006;
+    }
+    #goodbye-overlay {
+      display:none;
+      position: absolute;
+      top:0; left:0; width:100vw; height:100vh;
+      background: rgba(20,0,0,0.77);
+      color: #fff;
+      font-family: 'Orbitron', 'Impact', 'Arial Black', sans-serif;
+      letter-spacing: 0.09em;
+      text-align: center;
+      z-index: 2;
+    }
+    #goodbye-overlay .closed-title {
+      position:absolute;top:38%;left:0;width:100vw;
+      font-size:3.4em;text-shadow:0 2px 30px #a00,0 1px 8px #000;
+    }
+    #goodbye-overlay .closed-title span {
+      background:#e94c2fc9;padding:0.2em 1.5em;border-radius:22px;border:3px solid #a00;
+    }
+    #goodbye-overlay .closed-msg {
+      position:absolute;top:55%;left:0;width:100vw;font-size:1.4em;opacity:0.7;
+    }
+    #museum-app { display: none; }
+    nav {
+      background: linear-gradient(90deg, #1a1a1a 65%, #c00 100%);
+      box-shadow: 0 2px 16px #000d;
+      padding: 1.1em 0 0.6em 0;
+      position: sticky;
+      top: 0; z-index: 100;
+      border-bottom: 2px solid #e94c2f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2.2rem;
+      position:relative;
+    }
+    nav button {
+      background: none;
+      color: #f24;
+      border: none;
+      outline: none;
+      font-size: 1.12em;
+      font-weight: bold;
+      letter-spacing: 0.07em;
+      padding: 0.3em 1.2em;
+      border-radius: 9px;
+      margin: 0 0.3em;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    nav button.active, nav button:hover {
+      background: #e94c2f;
+      color: #fff;
+    }
+    #exit-btn {
+      margin-left:auto;
+      background: #900;
+      color: #fff;
+      border: none;
+      font-size: 1.07em;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      border-radius: 9px;
+      padding: 0.33em 1.1em;
+      cursor: pointer;
+      position: absolute;
+      right: 2vw;
+      top: 50%;
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px #9004;
+      transition: background 0.18s, color 0.18s;
+    }
+    #exit-btn:hover {
+      background: #a00;
+      color: #fff;
+    }
+    .container {
+      max-width: 980px;
+      margin: 2rem auto 4rem auto;
+      padding: 1.7em 3vw;
+      background: rgba(28,24,28,0.96);
+      border-radius: 18px;
+      box-shadow: 0 6px 32px 4px #600b, 0 2px 24px #2228;
+      border: 1.5px solid #922;
+    }
+    .museum-section {
+      display: none;
+      animation: fadeIn 0.25s;
+    }
+    .museum-section.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .section-title {
+      color: #f24;
+      font-size: 2.1em;
+      margin-bottom: 0.2em;
+      letter-spacing: 0.09em;
+      text-shadow: 0 1px 10px #400;
+      border-left: 5px solid #e94c2f;
+      padding-left: 0.7em;
+      margin-top: 1.5rem;
+    }
+    .narration {
+      margin: 0.8em 0 1.8em 0;
+      line-height: 1.6;
+      color: #ffe6e6;
+      font-size: 1.09rem;
+      text-shadow: 0 1px 6px #200;
+    }
+    .museum-map {
+      display: flex;
+      justify-content: center;
+      gap: 2.8em;
+      margin: 2em 0 1em 0;
+    }
+    .map-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #232324;
+      border: 2.5px solid #e94c2f;
+      border-radius: 15px;
+      width: 128px;
+      padding: 1em 0.5em 0.6em 0.5em;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 3px 18px #6006, 0 2px 14px #200;
+      font-size: 1.1em;
+      text-align: center;
+      transition: background 0.19s, box-shadow 0.18s;
+    }
+    .map-link:hover, .map-link.active {
+      background: #2b0005;
+      box-shadow: 0 0 20px #f24a;
+      color: #e94c2f;
+    }
+    .map-link .icon {
+      font-size: 2.4em;
+      margin-bottom: 0.2em;
+      text-shadow: 0 1px 12px #f24;
+    }
+    /* Art Gallery */
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.6em;
+      margin-bottom: 1.2em;
+      margin-top: 0.7em;
+      justify-content: flex-start;
+    }
+    .img-card {
+      width: 220px;
+      min-width: 110px;
+      background: linear-gradient(125deg, #313133 65%, #700 115%);
+      border: 2.5px solid #e94c2f;
+      border-radius: 13px;
+      box-shadow: 0 4px 20px #000a, 0 2px 10px #c002;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex-direction: column;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border 0.18s, box-shadow 0.18s;
+      position: relative;
+      padding-bottom: 0.9em;
+      min-height: 275px;
+    }
+    .img-card:focus {
+      outline: 2.5px solid #e94c2f;
+    }
+    .img-card:hover {
+      border-color: #fff;
+      box-shadow: 0 0 20px #c003;
+    }
+    .img-card img {
+      width: 98%;
+      max-width: 205px;
+      height: 170px;
+      object-fit: contain;
+      background: #181818;
+      border-radius: 7px;
+      margin-top: 0.7em;
+      margin-bottom: 0.6em;
+      box-shadow: 0 2px 12px #200a;
+      border: 1px solid #333;
+      display: block;
+    }
+    .img-card .img-title {
+      color: #fff;
+      font-size: 1.08em;
+      font-weight: bold;
+      margin: 0.2em 0 0 0;
+      letter-spacing: 0.03em;
+      text-shadow: 0 1px 6px #600;
+      text-align: center;
+      width: 95%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .img-card .img-desc {
+      color: #fff7;
+      font-size: 0.96em;
+      margin: 0.4em 0 0.1em 0;
+      line-height: 1.3;
+      text-align: center;
+      width: 95%;
+      min-height: 48px;
+      max-height: 4.2em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .img-card .img-tool {
+      color: #e94c2f;
+      font-size: 0.93em;
+      font-style: italic;
+      margin-top: 0.1em;
+      margin-bottom: 0.12em;
+      text-align: center;
+      width: 100%;
+      opacity: 0.75;
+    }
+    .img-card.coming-soon {
+      background: repeating-linear-gradient(135deg, #333 0 10px, #a77 10px 20px);
+      opacity: 0.44;
+      border-style: dashed;
+      border-color: #a66;
+      color: #bbb;
+      cursor: not-allowed;
+      pointer-events: none;
+      filter: grayscale(0.8);
+      display:flex;justify-content:center;align-items:center;
+      min-height: 200px;
+    }
+    .img-card.coming-soon .img-title,
+    .img-card.coming-soon .img-desc,
+    .img-card.coming-soon .img-tool {
+      color: #eee;
+      background: transparent;
+      opacity: 0.64;
+      left: 1.5em;
+      font-style: italic;
+      width:100%;
+      text-align:center;
+    }
+    .lightbox {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(15,0,0,0.96);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      transition: opacity 0.18s;
+    }
+    .lightbox.active {
+      display: flex;
+      animation: fadeIn 0.18s;
+    }
+    .lightbox-img {
+      width: 700px;
+      height: 440px;
+      background: linear-gradient(90deg, #222 60%, #700 150%);
+      border: 4px solid #e94c2f;
+      border-radius: 18px;
+      box-shadow: 0 0 44px 12px #000d, 0 2px 14px #9006;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.2em;
+      overflow:hidden;
+    }
+    .lightbox-img img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display:block;
+      margin:auto;
+    }
+    .lightbox-caption {
+      color: #ffe6e6;
+      font-size: 1.16em;
+      text-shadow: 0 1px 6px #300;
+      margin-bottom: 1.6em;
+      font-weight: 600;
+      text-align:center;
+      max-width:670px;
+    }
+    .lightbox-close {
+      color: #fff;
+      font-size: 1.8em;
+      background: #c00c;
+      border: 2px solid #f24;
+      border-radius: 50%;
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: absolute;
+      top: 3.2em;
+      right: 6vw;
+      box-shadow: 0 0 8px #600;
+      z-index: 2;
+      transition: background 0.18s, border 0.18s;
+    }
+    .lightbox-close:hover {
+      background: #e94c2f;
+      color: #fff;
+      border-color: #fff;
+    }
+    @media (max-width: 1000px) {
+      .container { padding: 1em 1vw;}
+      .gallery { flex-direction: column; gap: 1em;}
+      .img-card, .lightbox-img { width: 99vw; min-width: 0; max-width: 99vw; }
+      .lightbox-img { height: 48vw; min-height: 120px;}
+    }
+    @media (max-width: 700px) {
+      .lightbox-img { height: 48vw; min-height: 60vw;}
+      .gallery { gap:0.4em;}
+    }
+  </style>
+</head>
+<body>
+  <div id="entrance">
+    <div class="main-title">Mad Tinkers Archives</div>
+    <div class="subtitle">A Museum of AI Dreams & Ruins<br>
+      <span style="font-size:0.72em;opacity:0.7;">by Francisco De La Paz & Kairo Echo</span>
+    </div>
+    <button class="enter-btn" onclick="enterMuseum()">Enter Archives</button>
+    <div id="goodbye-overlay">
+      <div class="closed-title">
+        <span>&#x1F6AA;  Archives Closed</span>
+      </div>
+      <div class="closed-msg">
+        Thank you for visiting Mad Tinkers Archives.
+      </div>
+    </div>
+  </div>
+  <div id="museum-app">
+    <nav>
+      <button class="tab-btn active" data-section="intro">Lobby</button>
+      <button class="tab-btn" data-section="beforeai">Before AI</button>
+      <button class="tab-btn" data-section="withai">With AI</button>
+      <button class="tab-btn" data-section="costai">The Cost</button>
+      <button id="exit-btn">Exit</button>
+    </nav>
+    <div class="container">
+      <section id="intro" class="museum-section active">
+        <div class="section-title" style="font-size:2.2em;">Museum Lobby</div>
+        <div class="narration" style="max-width:590px; margin:auto; font-size:1.13em;">
+          You stand at the threshold of memory—a lobby among ruins.<br>
+          Here, the last museum waits to show you what humanity built, gained, and lost.<br>
+          Enter and choose a wing to explore the rise, peak, and collapse of civilization, through the eyes of both human and machine.
+        </div>
+        <div class="museum-map">
+          <div class="map-link" data-section="beforeai" tabindex="0">
+            <span class="icon">&#x1F3D9;</span>
+            <span>Before AI</span>
+          </div>
+          <div class="map-link" data-section="withai" tabindex="0">
+            <span class="icon">&#x1F916;</span>
+            <span>With AI</span>
+          </div>
+          <div class="map-link" data-section="costai" tabindex="0">
+            <span class="icon">&#x2620;</span>
+            <span>The Cost</span>
+          </div>
+        </div>
+        <div style="text-align:right;font-size:0.94em;opacity:0.6;margin-top:2em;">
+          Site by Francisco De La Paz & Kairo Echo (AI collaboration), 2025
+        </div>
+      </section>
+      <section id="beforeai" class="museum-section">
+        <div class="section-title">Before AI: Age of Innocence</div>
+        <div class="narration">
+          The Age of Innocence.<br>
+          Life moved to the rhythm of laughter in the town square, lessons in the schoolhouse, and stories shared in the library.<br>
+          Hope was measured in sunlit days and promises of tomorrow—a world unaware of the digital storm ahead.
+        </div>
+        <div class="gallery">
+          <div class="img-card" tabindex="0" data-img="TownSquare.png" data-title="Town Square" data-desc="A 1950s small-town square—sunlit, peaceful, and filled with promise. The heart of an age before the machine." data-tool="DALL·E 3">
+            <img src="TownSquare.png" alt="Town Square">
+            <div class="img-title">Town Square</div>
+            <div class="img-desc">A 1950s small-town square—sunlit, peaceful, and filled with promise. The heart of an age before the machine.</div>
+            <div class="img-tool">Created with DALL·E 3</div>
+          </div>
+          <div class="img-card" tabindex="0" data-img="SchoolHouse.png" data-title="Schoolhouse" data-desc="A classic brick elementary school, playground alive with laughter. Childhood in the American Dream." data-tool="DALL·E 3">
+            <img src="SchoolHouse.png" alt="Schoolhouse">
+            <div class="img-title">Schoolhouse</div>
+            <div class="img-desc">A classic brick elementary school, playground alive with laughter. Childhood in the American Dream.</div>
+            <div class="img-tool">Created with DALL·E 3</div>
+          </div>
+          <div class="img-card" tabindex="0" data-img="Library.png" data-title="Library" data-desc="A pinup librarian at the card catalog, sunlight on rows of books. Where curiosity was king." data-tool="ChatGPT Vision">
+            <img src="Library.png" alt="Library">
+            <div class="img-title">Library</div>
+            <div class="img-desc">A pinup librarian at the card catalog, sunlight on rows of books. Where curiosity was king.</div>
+            <div class="img-tool">Created with ChatGPT Vision</div>
+          </div>
+          <div class="img-card coming-soon"><div class="img-title">Coming Soon</div></div>
+          <div class="img-card coming-soon"><div class="img-title">Coming Soon</div></div>
+        </div>
+      </section>
+      <section id="withai" class="museum-section">
+        <div class="section-title">With AI: Age of Enlightenment</div>
+        <div class="narration">
+          The Second Enlightenment.<br>
+          Civilization shone with the brilliance of reason and invention. Robo-clinics healed, homes anticipated every need, and classrooms reached beyond walls.<br>
+          Humanity believed itself perfected—never guessing what was lost with each gain.
+        </div>
+        <div class="gallery">
+          <div class="img-card" tabindex="0" data-img="RoboClinic.png" data-title="Robo-Clinic" data-desc="A sleek, automated clinic where robot doctors heal and monitor, trust in the algorithm absolute." data-tool="Bing Image Creator">
+            <img src="RoboClinic.png" alt="Robo-Clinic">
+            <div class="img-title">Robo-Clinic</div>
+            <div class="img-desc">A sleek, automated clinic where robot doctors heal and monitor, trust in the algorithm absolute.</div>
+            <div class="img-tool">Created with Bing Image Creator</div>
+          </div>
+          <div class="img-card" tabindex="0" data-img="AutomatedHouse.png" data-title="Automated Home" data-desc="A bright living room, AI at work: robots serve, screens glow, a family at ease—freedom, or dependence?" data-tool="ChatGPT Vision">
+            <img src="AutomatedHouse.png" alt="Automated Home">
+            <div class="img-title">Automated Home</div>
+            <div class="img-desc">A bright living room, AI at work: robots serve, screens glow, a family at ease—freedom, or dependence?</div>
+            <div class="img-tool">Created with ChatGPT Vision</div>
+          </div>
+          <div class="img-card" tabindex="0" data-img="VirtualClassroom.png" data-title="Virtual Classroom" data-desc="A high-tech learning space where holographic teachers and digital minds blend. Knowledge, reimagined." data-tool="DALL·E 3">
+            <img src="VirtualClassroom.png" alt="Virtual Classroom">
+            <div class="img-title">Virtual Classroom</div>
+            <div class="img-desc">A high-tech learning space where holographic teachers and digital minds blend. Knowledge, reimagined.</div>
+            <div class="img-tool">Created with DALL·E 3</div>
+          </div>
+          <div class="img-card coming-soon"><div class="img-title">Coming Soon</div></div>
+          <div class="img-card coming-soon"><div class="img-title">Coming Soon</div></div>
+        </div>
+      </section>
+      <section id="costai" class="museum-section">
+        <div class="section-title">The Cost of AI</div>
+        <div class="narration">
+          The Reckoning.<br>
+          The city lies broken; metal giants rot in fields of ruin; rain washes away the memory of who we were.<br>
+          This is the price of unchecked ambition—a silence echoing with the lessons of the past.
+        </div>
+        <div class="gallery">
+          <div class="img-card" tabindex="0" data-img="CollapsedCity.png" data-title="Collapsed City" data-desc="A ruined metropolis under a red sky—skyscrapers crumbling, a skull among the ruins. The end of an age." data-tool="Bing Image Creator">
+            <img src="CollapsedCity.png" alt="Collapsed City">
+            <div class="img-title">Collapsed City</div>
+            <div class="img-desc">A ruined metropolis under a red sky—skyscrapers crumbling, a skull among the ruins. The end of an age.</div>
+            <div class="img-tool">Created with Bing Image Creator</div>
+          </div>
+          <div class="img-card" tabindex="0" data-img="MachineGraveyard.png" data-title="Machine Graveyard" data-desc="Gigantic robots, lifeless and rusting, scattered across a barren landscape. The ghosts of progress." data-tool="ChatGPT Vision">
+            <img src="MachineGraveyard.png" alt="Machine Graveyard">
+            <div class="img-title">Machine Graveyard</div>
+            <div class="img-desc">Gigantic robots, lifeless and rusting, scattered across a barren landscape. The ghosts of progress.</div>
+            <div class="img-tool">Created with ChatGPT Vision</div>
+          </div>
+          <div class="img-card" tabindex="0" data-img="AcidRainStreets.png" data-title="Acid Rain Streets" data-desc="A neon-lit, rain-soaked street—oil and blood swirling in the gutter. Humanity washed away." data-tool="DALL·E 3">
+            <img src="AcidRainStreets.png" alt="Acid Rain Streets">
+            <div class="img-title">Acid Rain Streets</div>
+            <div class="img-desc">A neon-lit, rain-soaked street—oil and blood swirling in the gutter. Humanity washed away.</div>
+            <div class="img-tool">Created with DALL·E 3</div>
+          </div>
+          <div class="img-card coming-soon"><div class="img-title">Coming Soon</div></div>
+          <div class="img-card coming-soon"><div class="img-title">Coming Soon</div></div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-close" onclick="closeLightbox()" title="Close">&times;</div>
+    <div class="lightbox-img"><img id="lightboxImg" src="" alt=""></div>
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+  <script>
+    function enterMuseum() {
+      document.getElementById('entrance').style.opacity = 0;
+      setTimeout(() => {
+        document.getElementById('entrance').style.display = 'none';
+        document.getElementById('museum-app').style.display = 'block';
+        window.scrollTo(0,0);
+        document.getElementById('goodbye-overlay').style.display = 'none';
+        document.querySelector('#entrance .enter-btn').style.display = '';
+      }, 750);
+    }
+    document.getElementById('exit-btn').onclick = function() {
+      document.getElementById('museum-app').style.display = 'none';
+      document.getElementById('entrance').style.display = 'flex';
+      document.getElementById('entrance').style.opacity = 1;
+      document.getElementById('goodbye-overlay').style.display = 'block';
+      document.querySelector('#entrance .enter-btn').style.display = 'none';
+    };
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.museum-section');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', function () {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.section).classList.add('active');
+      });
+    });
+    document.querySelectorAll('.map-link').forEach(link => {
+      link.addEventListener('click', function() {
+        document.querySelector('.tab-btn[data-section=' + link.dataset.section + ']').click();
+      });
+      link.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') link.click();
+      });
+    });
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('lightbox').addEventListener('click', function(e){
+      if (e.target === this) closeLightbox();
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === "Escape") closeLightbox();
+    });
+    document.querySelectorAll('.img-card:not(.coming-soon)').forEach(card => {
+      card.addEventListener('click', function() {
+        document.getElementById('lightboxImg').src = card.dataset.img || "";
+        let title = card.dataset.title ? "<b>"+card.dataset.title+"</b><br>" : "";
+        let desc = card.dataset.desc || "";
+        let tool = card.dataset.tool ? "<br><span style='font-size:0.93em;color:#e94c2f;font-style:italic;'>AI Tool: "+card.dataset.tool+"</span>" : "";
+        document.getElementById('lightboxCaption').innerHTML = title + desc + tool;
+        document.getElementById('lightbox').classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+      card.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') card.click();
+      });
+    });
+  </script>
+</body>
+</html>
